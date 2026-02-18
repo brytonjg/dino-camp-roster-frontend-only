@@ -3,24 +3,30 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Check, Pencil, X } from "lucide-react";
+import { toast } from "sonner";
 
 interface CamperCardProps {
   name: string;
   username: string;
   emoji: string;
-  onSave: (newUsername: string) => void;
+  onSave: (newUsername: string) => void | Promise<void>;
+  isSaving?: boolean;
 }
 
-const CamperCard = ({ name, username, emoji, onSave }: CamperCardProps) => {
+const CamperCard = ({ name, username, emoji, onSave, isSaving = false }: CamperCardProps) => {
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(username);
   const [showSuccess, setShowSuccess] = useState(false);
 
-  const handleSave = () => {
-    onSave(draft);
-    setEditing(false);
-    setShowSuccess(true);
-    setTimeout(() => setShowSuccess(false), 2000);
+  const handleSave = async () => {
+    try {
+      await onSave(draft);
+      setEditing(false);
+      setShowSuccess(true);
+      setTimeout(() => setShowSuccess(false), 2000);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to save username");
+    }
   };
 
   const handleCancel = () => {
@@ -44,8 +50,8 @@ const CamperCard = ({ name, username, emoji, onSave }: CamperCardProps) => {
                   className="h-9 text-sm"
                   autoFocus
                 />
-                <Button size="sm" onClick={handleSave} className="shrink-0">
-                  <Check className="h-4 w-4 mr-1" /> Save
+                <Button size="sm" onClick={handleSave} className="shrink-0" disabled={isSaving}>
+                  <Check className="h-4 w-4 mr-1" /> {isSaving ? "Saving..." : "Save"}
                 </Button>
                 <Button size="sm" variant="outline" onClick={handleCancel} className="shrink-0">
                   <X className="h-4 w-4 mr-1" /> Cancel
